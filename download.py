@@ -8,7 +8,8 @@ import tqdm
 
 
 logging.basicConfig(
-    format='[%(asctime)s] %(pathname)s:%(lineno)d %(levelname)s - %(message)s', level=logging.INFO)
+    format='[%(asctime)s] %(pathname)s:%(lineno)d %(levelname)s - %(message)s',
+    level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
