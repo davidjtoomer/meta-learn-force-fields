@@ -6,7 +6,11 @@ import torch
 
 
 class ANIDataset(torch.utils.data.Dataset):
-    def __init__(self, file_path: str, num_support: int = 1, num_query: int = 1):
+    def __init__(
+            self,
+            file_path: str,
+            num_support: int = 1,
+            num_query: int = 1):
         self.file_path = file_path
         self.num_support = num_support
         self.num_query = num_query
@@ -38,4 +42,5 @@ class ANIDataset(torch.utils.data.Dataset):
         support_indices = indices[:self.num_support]
         query_indices = indices[self.num_support:]
 
-        return atomic_numbers, coordinates[support_indices], energies[support_indices], coordinates[query_indices], energies[query_indices]
+        return atomic_numbers, coordinates[support_indices], energies[
+            support_indices], coordinates[query_indices], energies[query_indices]

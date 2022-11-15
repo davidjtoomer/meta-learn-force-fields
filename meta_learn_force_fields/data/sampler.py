@@ -8,7 +8,11 @@ class ANISampler(torch.utils.data.Sampler):
         self.num_tasks_per_epoch = num_tasks_per_epoch
 
     def __iter__(self):
-        return (np.random.default_rng().choice(self.indices, replace=False) for _ in range(self.num_tasks_per_epoch))
+        return (
+            np.random.default_rng().choice(
+                self.indices,
+                replace=False) for _ in range(
+                self.num_tasks_per_epoch))
 
     def __len__(self):
         return self.num_tasks_per_epoch

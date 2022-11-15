@@ -8,7 +8,13 @@ def identity(x):
     return x
 
 
-def train_val_test_split(file_path: str, train_frac: float = 0.6, batch_size: int = 1, num_support: int = 1, num_query: int = 1, num_tasks_per_epoch: int = 10):
+def train_val_test_split(
+        file_path: str,
+        train_frac: float = 0.6,
+        batch_size: int = 1,
+        num_support: int = 1,
+        num_query: int = 1,
+        num_tasks_per_epoch: int = 10):
     dataset = ANIDataset(
         file_path, num_support=num_support, num_query=num_query)
     n = len(dataset)
