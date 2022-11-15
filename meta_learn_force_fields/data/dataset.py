@@ -29,6 +29,9 @@ class ANIDataset(torch.utils.data.Dataset):
         coordinates = torch.Tensor(np.array(self.data[key]['coordinates']))
         energies = torch.Tensor(np.array(self.data[key]['energy']))
 
+        if len(energies) < self.num_support + self.num_query:
+            return None
+
         indices = np.random.default_rng().choice(
             len(energies), size=self.num_support + self.num_query, replace=False)
 
