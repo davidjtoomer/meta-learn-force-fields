@@ -8,8 +8,7 @@ class RadialFunction(torch.nn.Module):
         self.cutoff_radius = cutoff_radius
 
     def forward(self, distances: torch.Tensor) -> torch.Tensor:
-        radials = 0.5 * \
-            (torch.cos(np.pi * distances / self.cutoff_radius) + 1)
+        radials = torch.tanh(1 - (distances / self.cutoff_radius)) ** 3
         return torch.where(
             distances <= self.cutoff_radius,
             radials,
