@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 
 
@@ -8,8 +7,7 @@ class RadialFunction(torch.nn.Module):
         self.cutoff_radius = cutoff_radius
 
     def forward(self, distances: torch.Tensor) -> torch.Tensor:
-        radials = 0.5 * \
-            (torch.cos(np.pi * distances / self.cutoff_radius) + 1)
+        radials = torch.tanh(1 - (distances / self.cutoff_radius)) ** 3
         return torch.where(
             distances <= self.cutoff_radius,
             radials,
@@ -42,16 +40,21 @@ class G1(torch.nn.Module):
 
 
 class G2(torch.nn.Module):
-    def __init__(self, cutoff_radius: float = 5.0, eta: float = 0.5):
+    def __init__(
+            self,
+            cutoff_radius: float = 5.0,
+            center_radius: float = 5.0,
+            eta: float = 0.5):
         super().__init__()
         self.cutoff_radius = cutoff_radius
+        self.center_radius = center_radius
         self.eta = eta
 
         self.radial_function = RadialFunction(self.cutoff_radius)
 
     def forward(self, distances: torch.Tensor) -> torch.Tensor:
         exponential_term = torch.exp(-self.eta *
-                                     (distances - self.cutoff_radius) ** 2)
+                                     (distances - self.center_radius) ** 2)
         radial_term = self.radial_function(distances)
         return (exponential_term * radial_term).sum(dim=-1)
 
@@ -103,7 +106,10 @@ class G4(torch.nn.Module):
                                                                 dim=-2) * torch.unsqueeze(radials,
                                                                                           dim=-3)
 
-        return (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
+        coefficient = 2 ** (1 - self.zeta)
+
+        return coefficient * \
+            (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
 
 
 class G5(torch.nn.Module):
@@ -137,4 +143,7 @@ class G5(torch.nn.Module):
         radial_term = torch.unsqueeze(
             radials, dim=-1) * torch.unsqueeze(radials, dim=-2)
 
-        return (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
+        coefficient = 2 ** (1 - self.zeta)
+
+        return coefficient * \
+            (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
