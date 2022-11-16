@@ -40,7 +40,11 @@ class G1(torch.nn.Module):
 
 
 class G2(torch.nn.Module):
-    def __init__(self, cutoff_radius: float = 5.0, center_radius: float = 5.0, eta: float = 0.5):
+    def __init__(
+            self,
+            cutoff_radius: float = 5.0,
+            center_radius: float = 5.0,
+            eta: float = 0.5):
         super().__init__()
         self.cutoff_radius = cutoff_radius
         self.center_radius = center_radius
@@ -104,7 +108,8 @@ class G4(torch.nn.Module):
 
         coefficient = 2 ** (1 - self.zeta)
 
-        return coefficient * (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
+        return coefficient * \
+            (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
 
 
 class G5(torch.nn.Module):
@@ -140,4 +145,5 @@ class G5(torch.nn.Module):
 
         coefficient = 2 ** (1 - self.zeta)
 
-        return coefficient * (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
+        return coefficient * \
+            (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))

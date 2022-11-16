@@ -4,7 +4,14 @@ from .symmetry_functions import G1, G2, G3, G4, G5
 
 
 class FeaturizerConfig:
-    def __init__(self, cutoff_radius: float = 6.0, g1_params: dict = None, g2_params: dict = None, g3_params: dict = None, g4_params: dict = None, g5_params: dict = None):
+    def __init__(
+            self,
+            cutoff_radius: float = 6.0,
+            g1_params: dict = None,
+            g2_params: dict = None,
+            g3_params: dict = None,
+            g4_params: dict = None,
+            g5_params: dict = None):
         self.cutoff_radius = cutoff_radius
         self.g1_params = g1_params
         self.g2_params = g2_params
@@ -15,7 +22,12 @@ class FeaturizerConfig:
     @property
     def num_features(self):
         num_features = 0
-        for params in [self.g1_params, self.g2_params, self.g3_params, self.g4_params, self.g5_params]:
+        for params in [
+                self.g1_params,
+                self.g2_params,
+                self.g3_params,
+                self.g4_params,
+                self.g5_params]:
             if params is not None:
                 num_features += len(params)
         return num_features
@@ -50,7 +62,8 @@ class Featurizer(torch.nn.Module):
                 self.angular_symmetry_functions.append(
                     G5(cutoff_radius=self.config.cutoff_radius, **params))
 
-    def forward(self, atomic_numbers: torch.Tensor, coordinates: torch.Tensor) -> torch.Tensor:
+    def forward(self, atomic_numbers: torch.Tensor,
+                coordinates: torch.Tensor) -> torch.Tensor:
         distances = torch.cdist(coordinates, coordinates)
         distance_vectors = coordinates.unsqueeze(1) - coordinates.unsqueeze(0)
 

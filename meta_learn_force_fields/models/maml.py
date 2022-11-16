@@ -7,7 +7,14 @@ from .featurizer import FeaturizerConfig
 
 
 class MAML:
-    def __init__(self, mlp_layers: List[int], feature_config: FeaturizerConfig, num_inner_steps: int = 1, inner_lr: float = 0.1, learn_inner_lr: bool = False, outer_lr: float = 0.001):
+    def __init__(
+            self,
+            mlp_layers: List[int],
+            feature_config: FeaturizerConfig,
+            num_inner_steps: int = 1,
+            inner_lr: float = 0.1,
+            learn_inner_lr: bool = False,
+            outer_lr: float = 0.001):
         self.mlp_layers = mlp_layers
         self.feature_config = feature_config
         self.num_inner_steps = num_inner_steps
@@ -29,12 +36,19 @@ class MAML:
                 torch.empty(self.mlp_layers[i + 1], requires_grad=True)
             )
 
-        self.inner_lrs = {key: torch.tensor(
-            self.inner_lr, requires_grad=self.learn_inner_lr) for key in self.meta_parameters.keys()}
+        self.inner_lrs = {
+            key: torch.tensor(
+                self.inner_lr,
+                requires_grad=self.learn_inner_lr) for key in self.meta_parameters.keys()}
 
         self.loss_fn = torch.nn.L1Loss()
 
-    def inner_loop(self, atomic_numbers: torch.Tensor, coordinates: torch.Tensor, energies: torch.Tensor, train: bool) -> torch.Tensor:
+    def inner_loop(
+            self,
+            atomic_numbers: torch.Tensor,
+            coordinates: torch.Tensor,
+            energies: torch.Tensor,
+            train: bool) -> torch.Tensor:
         losses = []
         parameters = {key: torch.clone(value)
                       for key, value in self.meta_parameters.items()}
