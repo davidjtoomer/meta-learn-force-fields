@@ -103,7 +103,9 @@ class G4(torch.nn.Module):
                                                                 dim=-2) * torch.unsqueeze(radials,
                                                                                           dim=-3)
 
-        return (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
+        coefficient = 2 ** (1 - self.zeta)
+
+        return coefficient * (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
 
 
 class G5(torch.nn.Module):
@@ -137,4 +139,6 @@ class G5(torch.nn.Module):
         radial_term = torch.unsqueeze(
             radials, dim=-1) * torch.unsqueeze(radials, dim=-2)
 
-        return (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
+        coefficient = 2 ** (1 - self.zeta)
+
+        return coefficient * (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
