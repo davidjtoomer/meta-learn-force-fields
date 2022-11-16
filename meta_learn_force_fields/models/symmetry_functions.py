@@ -41,16 +41,17 @@ class G1(torch.nn.Module):
 
 
 class G2(torch.nn.Module):
-    def __init__(self, cutoff_radius: float = 5.0, eta: float = 0.5):
+    def __init__(self, cutoff_radius: float = 5.0, center_radius: float = 5.0, eta: float = 0.5):
         super().__init__()
         self.cutoff_radius = cutoff_radius
+        self.center_radius = center_radius
         self.eta = eta
 
         self.radial_function = RadialFunction(self.cutoff_radius)
 
     def forward(self, distances: torch.Tensor) -> torch.Tensor:
         exponential_term = torch.exp(-self.eta *
-                                     (distances - self.cutoff_radius) ** 2)
+                                     (distances - self.center_radius) ** 2)
         radial_term = self.radial_function(distances)
         return (exponential_term * radial_term).sum(dim=-1)
 
