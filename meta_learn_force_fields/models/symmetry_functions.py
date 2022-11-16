@@ -10,14 +10,18 @@ class RadialFunction(torch.nn.Module):
     def forward(self, distances: torch.Tensor) -> torch.Tensor:
         radials = 0.5 * \
             (torch.cos(np.pi * distances / self.cutoff_radius) + 1)
-        return torch.where(distances <= self.cutoff_radius, radials, torch.zeros_like(distances))
+        return torch.where(
+            distances <= self.cutoff_radius,
+            radials,
+            torch.zeros_like(distances))
 
 
 class AngularFunction(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, distance_vectors: torch.Tensor, distances: torch.Tensor) -> torch.Tensor:
+    def forward(self, distance_vectors: torch.Tensor,
+                distances: torch.Tensor) -> torch.Tensor:
         dot_products = torch.einsum(
             '...ijd,...jkd->...ijk', distance_vectors, distance_vectors)
         magnitudes = torch.einsum(
@@ -67,7 +71,12 @@ class G3(torch.nn.Module):
 
 
 class G4(torch.nn.Module):
-    def __init__(self, cutoff_radius: float = 5.0, eta: float = 0.5, zeta: float = 1.0, lambda_: float = 1.0):
+    def __init__(
+            self,
+            cutoff_radius: float = 5.0,
+            eta: float = 0.5,
+            zeta: float = 1.0,
+            lambda_: float = 1.0):
         super().__init__()
         self.cutoff_radius = cutoff_radius
         self.eta = eta
@@ -77,7 +86,8 @@ class G4(torch.nn.Module):
         self.radial_function = RadialFunction(self.cutoff_radius)
         self.angular_function = AngularFunction()
 
-    def forward(self, distance_vectors: torch.Tensor, distances: torch.Tensor) -> torch.Tensor:
+    def forward(self, distance_vectors: torch.Tensor,
+                distances: torch.Tensor) -> torch.Tensor:
         cosines = self.angular_function(distance_vectors, distances)
         cosine_term = (1 + self.lambda_ * cosines) ** self.zeta
         cosine_term = torch.nan_to_num(
@@ -88,14 +98,21 @@ class G4(torch.nn.Module):
         exponential_term = torch.exp(-self.eta * exponent)
 
         radials = self.radial_function(distances)
-        radial_term = torch.unsqueeze(
-            radials, dim=-1) * torch.unsqueeze(radials, dim=-2) * torch.unsqueeze(radials, dim=-3)
+        radial_term = torch.unsqueeze(radials,
+                                      dim=-1) * torch.unsqueeze(radials,
+                                                                dim=-2) * torch.unsqueeze(radials,
+                                                                                          dim=-3)
 
         return (cosine_term * exponential_term * radial_term).sum(dim=(-1, -2))
 
 
 class G5(torch.nn.Module):
-    def __init__(self, cutoff_radius: float = 5.0, eta: float = 0.5, zeta: float = 1.0, lambda_: float = 1.0):
+    def __init__(
+            self,
+            cutoff_radius: float = 5.0,
+            eta: float = 0.5,
+            zeta: float = 1.0,
+            lambda_: float = 1.0):
         super().__init__()
         self.cutoff_radius = cutoff_radius
         self.eta = eta
@@ -105,7 +122,8 @@ class G5(torch.nn.Module):
         self.radial_function = RadialFunction(self.cutoff_radius)
         self.angular_function = AngularFunction()
 
-    def forward(self, distance_vectors: torch.Tensor, distances: torch.Tensor) -> torch.Tensor:
+    def forward(self, distance_vectors: torch.Tensor,
+                distances: torch.Tensor) -> torch.Tensor:
         cosines = self.angular_function(distance_vectors, distances)
         cosine_term = (1 + self.lambda_ * cosines) ** self.zeta
         cosine_term = torch.nan_to_num(
