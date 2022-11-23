@@ -16,8 +16,14 @@ logger = logging.getLogger(__name__)
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', type=str, default='data',
                     help='The directory in which the data are stored.')
-parser.add_argument('--energy_unit', type=str, default='hartree',
-                    choices=['kcal/mol', 'hartree'], help='The unit of energy.')
+parser.add_argument(
+    '--energy_unit',
+    type=str,
+    default='hartree',
+    choices=[
+        'kcal/mol',
+        'hartree'],
+    help='The unit of energy.')
 args = parser.parse_args()
 
 if not os.path.exists(args.data_dir):

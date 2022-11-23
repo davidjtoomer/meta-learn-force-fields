@@ -16,8 +16,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='1ccx',
-                    choices=['1x', '1ccx'], help='The dataset on which to train.')
+parser.add_argument(
+    '--dataset',
+    type=str,
+    default='1ccx',
+    choices=[
+        '1x',
+        '1ccx'],
+    help='The dataset on which to train.')
 parser.add_argument('--data_dir', type=str, default='data',
                     help='The directory in which to download the data.')
 parser.add_argument('--log_dir', type=str, default='logs',
@@ -105,7 +111,10 @@ logger.info('Successfully created model.')
 logger.info('Training model...')
 
 
-def run_one_epoch(dataloader: torch.utils.data.DataLoader, optimizer, train: bool = True):
+def run_one_epoch(
+        dataloader: torch.utils.data.DataLoader,
+        optimizer,
+        train: bool = True):
     pre_adapt_support_losses = []
     post_adapt_support_losses = []
     post_adapt_query_losses = []
@@ -121,7 +130,8 @@ def run_one_epoch(dataloader: torch.utils.data.DataLoader, optimizer, train: boo
         post_adapt_support_losses.append(support_losses[-1].item())
         post_adapt_query_losses.append(outer_loss.item())
 
-    return np.mean(pre_adapt_support_losses), np.mean(post_adapt_support_losses), np.mean(post_adapt_query_losses)
+    return np.mean(pre_adapt_support_losses), np.mean(
+        post_adapt_support_losses), np.mean(post_adapt_query_losses)
 
 
 optimizer = torch.optim.Adam(
