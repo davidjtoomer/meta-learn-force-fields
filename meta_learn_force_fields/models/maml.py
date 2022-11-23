@@ -28,11 +28,11 @@ class MAML:
 
         self.meta_parameters = {}
         for i in range(self.num_mlp_layers):
-            self.meta_parameters[f'weight_{i}'] = torch.nn.xavier_uniform_(
+            self.meta_parameters[f'weight_{i}'] = torch.nn.init.xavier_uniform_(
                 torch.empty(
-                    self.mlp_layers[i], self.mlp_layers[i + 1], requires_grad=True)
+                    self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True)
             )
-            self.meta_parameters[f'bias_{i}'] = torch.nn.xavier_uniform_(
+            self.meta_parameters[f'bias_{i}'] = torch.nn.init.zeros_(
                 torch.empty(self.mlp_layers[i + 1], requires_grad=True)
             )
 
@@ -48,22 +48,26 @@ class MAML:
             atomic_numbers: torch.Tensor,
             coordinates: torch.Tensor,
             energies: torch.Tensor,
-            train: bool) -> torch.Tensor:
+            train: bool):
         losses = []
         parameters = {key: torch.clone(value)
                       for key, value in self.meta_parameters.items()}
         for _ in range(self.num_inner_steps):
             energy_pred = self.model(atomic_numbers, coordinates, parameters)
-            loss = self.loss(energy_pred, energies)
+            loss = self.loss_fn(energy_pred, energies)
             gradients = torch.autograd.grad(
                 loss, parameters.values(), create_graph=train)
             for i, (key, value) in enumerate(parameters.items()):
                 parameters[key] = value - self.inner_lrs[key] * gradients[i]
-            losses.append(loss.item())
+            losses.append(loss)
 
-        return parameters, losses
+        energy_pred = self.model(atomic_numbers, coordinates, parameters)
+        loss = self.loss_fn(energy_pred, energies)
+        losses.append(loss)
 
-    def outer_loop(self, task_batch: list, train: bool):
+        return parameters, torch.tensor(losses)
+
+    def outer_loop(self, task_batch: list, train: bool = True):
         outer_loss_batch = []
         support_losses_batch = []
         for task in task_batch:
@@ -81,4 +85,5 @@ class MAML:
             outer_loss_batch.append(outer_loss)
 
         outer_loss = torch.mean(torch.stack(outer_loss_batch))
-        return outer_loss, support_losses_batch
+        support_losses = torch.mean(torch.stack(support_losses_batch), dim=0)
+        return outer_loss, support_losses
