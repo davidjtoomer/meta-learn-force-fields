@@ -6,6 +6,8 @@ import h5py
 import numpy as np
 import tqdm
 
+HARTREE_TO_KCAL_MOL = 627.5094740631
+
 logging.basicConfig(
     format='[%(asctime)s] %(pathname)s:%(lineno)d %(levelname)s - %(message)s',
     level=logging.INFO)
@@ -14,6 +16,14 @@ logger = logging.getLogger(__name__)
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', type=str, default='data',
                     help='The directory in which the data are stored.')
+parser.add_argument(
+    '--energy_unit',
+    type=str,
+    default='hartree',
+    choices=[
+        'kcal/mol',
+        'hartree'],
+    help='The unit of energy.')
 args = parser.parse_args()
 
 if not os.path.exists(args.data_dir):
@@ -32,8 +42,13 @@ with h5py.File(file_path, 'r') as f:
             for name, molecule in tqdm.tqdm(f.items(), leave=False):
                 atomic_numbers = molecule['atomic_numbers']
                 coordinates = molecule['coordinates']
-                dft_energies = molecule['wb97x_dz.energy']
-                ccsd_energies = molecule['ccsd(t)_cbs.energy']
+                dft_energies = np.array(
+                    molecule['wb97x_dz.energy'])
+                ccsd_energies = np.array(
+                    molecule['ccsd(t)_cbs.energy'])
+                if args.energy_unit == 'kcal/mol':
+                    dft_energies *= HARTREE_TO_KCAL_MOL
+                    ccsd_energies *= HARTREE_TO_KCAL_MOL
 
                 group_1x = f_1x.create_group(name)
                 group_1x.create_dataset('atomic_numbers', data=atomic_numbers)

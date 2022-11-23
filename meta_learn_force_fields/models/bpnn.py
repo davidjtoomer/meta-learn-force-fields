@@ -20,6 +20,6 @@ class BPNN(torch.nn.Module):
         for i in range(self.num_layers):
             x = torch.nn.functional.linear(
                 x, parameters[f'weight_{i}'], parameters[f'bias_{i}'])
-            x = torch.nn.functional.silu(x)
-        x = x.squeeze()
-        return x.sum(dim=-1)
+            if i < self.num_layers - 1:
+                x = torch.nn.functional.silu(x)
+        return x.sum(dim=-2).squeeze(-1)
