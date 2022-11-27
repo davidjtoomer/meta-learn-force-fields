@@ -10,38 +10,42 @@ class MAML:
     def __init__(
             self,
             mlp_layers: List[int],
+            atomic_numbers: List[int],
             feature_config: FeaturizerConfig,
             num_inner_steps: int = 1,
             inner_lr: float = 0.1,
             learn_inner_lr: bool = False,
-            outer_lr: float = 0.001):
+            outer_lr: float = 0.001,
+            loss_fn=torch.nn.L1Loss()):
         self.mlp_layers = mlp_layers
+        self.atomic_numbers = atomic_numbers
         self.feature_config = feature_config
         self.num_inner_steps = num_inner_steps
         self.inner_lr = inner_lr
         self.learn_inner_lr = learn_inner_lr
         self.outer_lr = outer_lr
+        self.loss_fn = loss_fn
 
         self.num_mlp_layers = len(self.mlp_layers) - 1
 
-        self.model = BPNN(self.num_mlp_layers, self.feature_config)
+        self.model = BPNN(self.num_mlp_layers,
+                          self.atomic_numbers, self.feature_config)
 
         self.meta_parameters = {}
-        for i in range(self.num_mlp_layers):
-            self.meta_parameters[f'weight_{i}'] = torch.nn.init.xavier_uniform_(
-                torch.empty(
-                    self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True)
-            )
-            self.meta_parameters[f'bias_{i}'] = torch.nn.init.zeros_(
-                torch.empty(self.mlp_layers[i + 1], requires_grad=True)
-            )
+        for atomic_number in self.atomic_numbers:
+            for i in range(self.num_mlp_layers):
+                self.meta_parameters[f'atom_{atomic_number}_weight_{i}'] = torch.nn.init.xavier_normal_(
+                    torch.empty(
+                        self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True)
+                )
+                self.meta_parameters[f'atom_{atomic_number}_bias_{i}'] = torch.nn.init.zeros_(
+                    torch.empty(self.mlp_layers[i + 1], requires_grad=True)
+                )
 
         self.inner_lrs = {
             key: torch.tensor(
                 self.inner_lr,
                 requires_grad=self.learn_inner_lr) for key in self.meta_parameters.keys()}
-
-        self.loss_fn = torch.nn.L1Loss()
 
     def inner_loop(
             self,
