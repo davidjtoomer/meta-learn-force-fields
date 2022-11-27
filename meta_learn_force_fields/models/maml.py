@@ -35,12 +35,9 @@ class MAML:
         for atomic_number in self.atomic_numbers:
             for i in range(self.num_mlp_layers):
                 self.meta_parameters[f'atom_{atomic_number}_weight_{i}'] = torch.nn.init.xavier_normal_(
-                    torch.empty(
-                        self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True)
-                )
+                    torch.empty(self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True))
                 self.meta_parameters[f'atom_{atomic_number}_bias_{i}'] = torch.nn.init.zeros_(
-                    torch.empty(self.mlp_layers[i + 1], requires_grad=True)
-                )
+                    torch.empty(self.mlp_layers[i + 1], requires_grad=True))
 
         self.inner_lrs = {
             key: torch.tensor(
