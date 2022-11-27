@@ -36,13 +36,13 @@ parser.add_argument('--outer_lr', type=float, default=0.001,
                     help='The outer loop learning rate.')
 parser.add_argument('--learn_inner_lr', action='store_true',
                     help='When present, learn the inner loop learning rates.')
-parser.add_argument('--num_epochs', type=int, default=100,
+parser.add_argument('--num_epochs', type=int, default=500,
                     help='The number of epochs to train for.')
 parser.add_argument('--num_tasks_per_epoch', type=int,
                     default=160, help='The number of tasks per epoch.')
 parser.add_argument('--batch_size', type=int,
                     default=16, help='The batch size.')
-parser.add_argument('--num_support', type=int, default=5,
+parser.add_argument('--num_support', type=int, default=1,
                     help='The number of support examples.')
 parser.add_argument('--num_query', type=int, default=1,
                     help='The number of query examples.')
@@ -50,6 +50,8 @@ parser.add_argument('--num_inner_steps', type=int, default=0,
                     help='The number of inner loop updates.')
 parser.add_argument('--train_frac', type=float, default=0.6,
                     help='The percentage of the dataset to use for training.')
+parser.add_argument('--cutoff_radius', type=float,
+                    default=6.0, help='The cutoff radius (Å).')
 args = parser.parse_args()
 
 os.makedirs(args.log_dir, exist_ok=True)
@@ -72,35 +74,26 @@ logger.info(f'Successfully loaded data from {file_path}.')
 
 logger.info('Creating model...')
 featurizer_config = FeaturizerConfig(
-    g1_param_ranges={
-        'cutoff_radius': [10.0]
-    },
     g2_param_ranges={
-        'cutoff_radius': [10.0],
-        'center_radius': np.linspace(0.0, 8.0, 16),
-        'eta': np.logspace(-4, 0, 5)
-    },
-    g3_param_ranges={
-        'cutoff_radius': [10.0],
-        'kappa': np.linspace(1.0, 4.0, 4),
-    },
-    g4_param_ranges={
-        'cutoff_radius': [10.0],
-        'eta': np.logspace(-4, 0, 5),
-        'zeta': np.linspace(1.0, 4.0, 4),
-        'lambda_': [-1.0, 1.0]
+        'cutoff_radius': [args.cutoff_radius],
+        'radial_shift': np.linspace(0.0, args.cutoff_radius, 32),
+        'eta': [4.0]
     },
     g5_param_ranges={
-        'cutoff_radius': [10.0],
-        'eta': np.logspace(-4, 0, 5),
-        'zeta': np.linspace(1.0, 4.0, 4),
-        'lambda_': [-1.0, 1.0]
+        'cutoff_radius': [args.cutoff_radius],
+        'radial_shift': np.linspace(0.0, args.cutoff_radius, 8),
+        'angular_shift': np.linspace(0.0, np.pi, 8),
+        'eta': [4.0],
+        'zeta': [8.0],
     })
-num_features = featurizer_config.num_features + 1
+logger.info(
+    f'Model contains {featurizer_config.num_features} features per atomic number.')
 
-mlp_layers = [num_features, 512, 128, 64, 1]
+mlp_layers = [featurizer_config.num_features, 64, 1]
+atomic_numbers = [1, 6, 7, 8]  # H, C, N, O
 model = MAML(
     mlp_layers,
+    atomic_numbers,
     featurizer_config,
     num_inner_steps=args.num_inner_steps,
     inner_lr=args.inner_lr,

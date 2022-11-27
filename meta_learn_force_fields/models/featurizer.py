@@ -43,11 +43,11 @@ class FeaturizerConfig:
         self.g2_params = []
         if self.g2_param_ranges is not None:
             for cutoff_radius in self.g2_param_ranges['cutoff_radius']:
-                for center_radius in self.g2_param_ranges['center_radius']:
+                for center_radius in self.g2_param_ranges['radial_shift']:
                     for eta in self.g2_param_ranges['eta']:
                         self.g2_params.append({
                             'cutoff_radius': cutoff_radius,
-                            'center_radius': center_radius,
+                            'radial_shift': center_radius,
                             'eta': eta
                         })
 
@@ -75,16 +75,18 @@ class FeaturizerConfig:
 
         self.g5_params = []
         if self.g5_param_ranges is not None:
-            for cutoff_radius in self.g4_param_ranges['cutoff_radius']:
-                for eta in self.g4_param_ranges['eta']:
-                    for zeta in self.g4_param_ranges['zeta']:
-                        for lambda_ in self.g4_param_ranges['lambda_']:
-                            self.g5_params.append({
-                                'cutoff_radius': cutoff_radius,
-                                'eta': eta,
-                                'zeta': zeta,
-                                'lambda_': lambda_
-                            })
+            for cutoff_radius in self.g5_param_ranges['cutoff_radius']:
+                for radial_shift in self.g5_param_ranges['radial_shift']:
+                    for angular_shift in self.g5_param_ranges['angular_shift']:
+                        for eta in self.g5_param_ranges['eta']:
+                            for zeta in self.g5_param_ranges['zeta']:
+                                self.g5_params.append({
+                                    'cutoff_radius': cutoff_radius,
+                                    'radial_shift': radial_shift,
+                                    'angular_shift': angular_shift,
+                                    'eta': eta,
+                                    'zeta': zeta
+                                })
 
 
 class Featurizer(torch.nn.Module):
@@ -113,16 +115,12 @@ class Featurizer(torch.nn.Module):
                 self.angular_symmetry_functions.append(
                     G5(**params))
 
-    def forward(self, atomic_numbers: torch.Tensor,
-                coordinates: torch.Tensor) -> torch.Tensor:
+    def forward(self, coordinates: torch.Tensor) -> torch.Tensor:
         distances = torch.cdist(coordinates, coordinates)
         distance_vectors = coordinates.unsqueeze(-2) - \
             coordinates.unsqueeze(-3)
 
-        atomic_numbers = atomic_numbers.expand(coordinates.shape[0], -1)
-
         features = []
-        features.append(atomic_numbers.unsqueeze(-1))
         for function in self.radial_symmetry_functions:
             features.append(function(distances).unsqueeze(-1))
         for function in self.angular_symmetry_functions:
