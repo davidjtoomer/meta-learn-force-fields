@@ -89,6 +89,9 @@ featurizer_config = FeaturizerConfig(
 logger.info(
     f'Model contains {featurizer_config.num_features} features per atomic number.')
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+logger.info(f'Using device {DEVICE}.')
+
 mlp_layers = [featurizer_config.num_features, 64, 1]
 atomic_numbers = [1, 6, 7, 8]  # H, C, N, O
 model = MAML(
@@ -98,7 +101,8 @@ model = MAML(
     num_inner_steps=args.num_inner_steps,
     inner_lr=args.inner_lr,
     learn_inner_lr=args.learn_inner_lr,
-    outer_lr=args.outer_lr)
+    outer_lr=args.outer_lr,
+    device=DEVICE)
 logger.info('Successfully created model.')
 
 logger.info('Training model...')
