@@ -136,3 +136,6 @@ dmypy.json
 
 # TensorBoard logs
 /logs
+
+# Mac
+.DS_Store
