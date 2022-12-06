@@ -30,7 +30,7 @@ parser.add_argument('--log_dir', type=str, default='logs',
                     help='The directory in which to store logs.')
 parser.add_argument('--log_interval', type=int, default=1,
                     help='The number of epochs between logging to stdout.')
-parser.add_argument('--save_interval', type=int, default=1,
+parser.add_argument('--save_interval', type=int, default=10,
                     help='The number of epochs between saving checkpoints.')
 parser.add_argument('--inner_lr', type=float, default=0.01,
                     help='The inner loop learning rate.')
@@ -100,7 +100,7 @@ logger.info(
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f'Using device {DEVICE}.')
 
-mlp_layers = [featurizer_config.num_features, 64, 1]
+mlp_layers = [featurizer_config.num_features, 32, 1]
 atomic_numbers = [1, 6, 7, 8]  # H, C, N, O
 model = MAML(
     mlp_layers,
@@ -155,6 +155,8 @@ def run_one_epoch(
 optimizer = torch.optim.Adam(
     list(model.meta_parameters.values()) + list(model.inner_lrs.values()),
     lr=args.outer_lr)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, factor=0.5, patience=10, verbose=True)
 
 for epoch in range(args.num_epochs):
     pre_adapt_support_loss_train, post_adapt_support_loss_train, post_adapt_query_loss_train, \
@@ -176,6 +178,7 @@ for epoch in range(args.num_epochs):
     pre_adapt_support_loss_val, post_adapt_support_loss_val, post_adapt_query_loss_val, \
         pre_adapt_support_mae_val, post_adapt_support_mae_val, post_adapt_query_mae_val = run_one_epoch(
             val_dataloader, optimizer, train=False)
+    scheduler.step(post_adapt_query_loss_val)
     writer.add_scalar('val/loss/pre_adapt_support',
                       pre_adapt_support_loss_val, epoch)
     writer.add_scalar('val/loss/post_adapt_support',
