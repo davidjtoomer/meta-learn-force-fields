@@ -90,7 +90,7 @@ featurizer_config = FeaturizerConfig(
     g5_param_ranges={
         'cutoff_radius': [args.cutoff_radius],
         'radial_shift': np.linspace(0.0, args.cutoff_radius, 8),
-        'angular_shift': np.linspace(0.0, np.pi, 8),
+        'angular_shift': np.linspace(-np.pi, np.pi, 8),
         'eta': [4.0],
         'zeta': [8.0],
     })
