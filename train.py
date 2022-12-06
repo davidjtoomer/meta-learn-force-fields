@@ -208,4 +208,4 @@ for epoch in range(args.num_epochs):
         torch.save({
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict()},
-            os.path.join(args.log_dir, f'checkpoint_{epoch}.pt'))
+            os.path.join(LOG_DIR, f'checkpoint_{epoch}.pt'))
