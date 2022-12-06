@@ -30,6 +30,8 @@ parser.add_argument('--log_dir', type=str, default='logs',
                     help='The directory in which to store logs.')
 parser.add_argument('--log_interval', type=int, default=1,
                     help='The number of epochs between logging to stdout.')
+parser.add_argument('--save_interval', type=int, default=1,
+                    help='The number of epochs between saving checkpoints.')
 parser.add_argument('--inner_lr', type=float, default=0.1,
                     help='The inner loop learning rate.')
 parser.add_argument('--outer_lr', type=float, default=0.001,
@@ -54,8 +56,12 @@ parser.add_argument('--cutoff_radius', type=float,
                     default=6.0, help='The cutoff radius (Å).')
 args = parser.parse_args()
 
-os.makedirs(args.log_dir, exist_ok=True)
-writer = tensorboard.SummaryWriter(args.log_dir)
+# create tag for log directory
+tag = f'support_{args.num_support}_query_{args.num_query}_inner_steps_{args.num_inner_steps}_inner_lr_{args.inner_lr}_outer_lr_{args.outer_lr}_learn_inner_lr_{args.learn_inner_lr}'
+
+LOG_DIR = os.path.join(args.log_dir, args.dataset, tag)
+os.makedirs(LOG_DIR, exist_ok=True)
+writer = tensorboard.SummaryWriter(LOG_DIR)
 
 logger.info('Loading data...')
 file_path = os.path.join(args.data_dir, f'ani{args.dataset}.h5')
@@ -165,3 +171,9 @@ for epoch in range(args.num_epochs):
             f'Pre-adapt support MAE: {pre_adapt_support_loss_val}. '
             f'Post-adapt support MAE: {post_adapt_support_loss_val}. '
             f'Post-adapt query MAE: {post_adapt_query_loss_val}.')
+
+    if epoch % args.save_interval == 0:
+        torch.save({
+            'model': model.state_dict(),
+            'optimizer': optimizer.state_dict()},
+            os.path.join(args.log_dir, f'checkpoint_{epoch}.pt'))
