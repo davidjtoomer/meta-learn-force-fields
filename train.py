@@ -44,11 +44,11 @@ parser.add_argument('--num_tasks_per_epoch', type=int,
                     default=160, help='The number of tasks per epoch.')
 parser.add_argument('--batch_size', type=int,
                     default=16, help='The batch size.')
-parser.add_argument('--num_support', type=int, default=1,
+parser.add_argument('--num_support', type=int, default=5,
                     help='The number of support examples.')
 parser.add_argument('--num_query', type=int, default=1,
                     help='The number of query examples.')
-parser.add_argument('--num_inner_steps', type=int, default=0,
+parser.add_argument('--num_inner_steps', type=int, default=1,
                     help='The number of inner loop updates.')
 parser.add_argument('--train_frac', type=float, default=0.6,
                     help='The percentage of the dataset to use for training.')

@@ -38,14 +38,12 @@ class MAML:
         for atomic_number in self.atomic_numbers:
             for i in range(self.num_mlp_layers):
                 self.meta_parameters[f'atom_{atomic_number}_weight_{i}'] = torch.nn.init.xavier_normal_(
-                    torch.empty(self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True))
+                    torch.empty(self.mlp_layers[i + 1], self.mlp_layers[i], requires_grad=True, device=self.device))
                 self.meta_parameters[f'atom_{atomic_number}_bias_{i}'] = torch.nn.init.zeros_(
-                    torch.empty(self.mlp_layers[i + 1], requires_grad=True))
+                    torch.empty(self.mlp_layers[i + 1], requires_grad=True, device=self.device))
 
         self.inner_lrs = {
-            key: torch.tensor(
-                self.inner_lr,
-                requires_grad=self.learn_inner_lr) for key in self.meta_parameters.keys()}
+            key: torch.tensor(self.inner_lr, requires_grad=self.learn_inner_lr, device=self.device) for key in self.meta_parameters.keys()}
 
     def inner_loop(
             self,
