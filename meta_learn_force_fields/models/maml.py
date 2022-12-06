@@ -43,7 +43,10 @@ class MAML:
                     torch.empty(self.mlp_layers[i + 1], requires_grad=True, device=self.device))
 
         self.inner_lrs = {
-            key: torch.tensor(self.inner_lr, requires_grad=self.learn_inner_lr, device=self.device) for key in self.meta_parameters.keys()}
+            key: torch.tensor(
+                self.inner_lr,
+                requires_grad=self.learn_inner_lr,
+                device=self.device) for key in self.meta_parameters.keys()}
 
     def inner_loop(
             self,

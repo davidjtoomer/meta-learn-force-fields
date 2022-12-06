@@ -25,7 +25,9 @@ class BPNN(torch.nn.Module):
             parameters: dict) -> torch.Tensor:
         x = self.featurizer(coordinates)
         energies = torch.empty(
-            coordinates.shape[0], coordinates.shape[1], device=coordinates.device)
+            coordinates.shape[0],
+            coordinates.shape[1],
+            device=coordinates.device)
         for atomic_number in self.atomic_numbers:
             indices = torch.where(atomic_numbers == atomic_number)[0]
             atoms = x[:, indices]
