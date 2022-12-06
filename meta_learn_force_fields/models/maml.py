@@ -16,7 +16,8 @@ class MAML:
             inner_lr: float = 0.1,
             learn_inner_lr: bool = False,
             outer_lr: float = 0.001,
-            loss_fn=torch.nn.L1Loss()):
+            loss_fn=torch.nn.L1Loss(),
+            device=torch.device('cpu')):
         self.mlp_layers = mlp_layers
         self.atomic_numbers = atomic_numbers
         self.feature_config = feature_config
@@ -25,11 +26,13 @@ class MAML:
         self.learn_inner_lr = learn_inner_lr
         self.outer_lr = outer_lr
         self.loss_fn = loss_fn
+        self.device = device
 
         self.num_mlp_layers = len(self.mlp_layers) - 1
 
         self.model = BPNN(self.num_mlp_layers,
                           self.atomic_numbers, self.feature_config)
+        self.model.to(self.device)
 
         self.meta_parameters = {}
         for atomic_number in self.atomic_numbers:
@@ -75,6 +78,11 @@ class MAML:
             if not task:
                 continue
             atomic_numbers, support_coordinates, support_energies, query_coordinates, query_energies = task
+            atomic_numbers = atomic_numbers.to(self.device)
+            support_coordinates = support_coordinates.to(self.device)
+            support_energies = support_energies.to(self.device)
+            query_coordinates = query_coordinates.to(self.device)
+            query_energies = query_energies.to(self.device)
 
             parameters, inner_losses = self.inner_loop(
                 atomic_numbers, support_coordinates, support_energies, train)
