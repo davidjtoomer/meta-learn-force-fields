@@ -32,12 +32,14 @@ parser.add_argument('--log_interval', type=int, default=1,
                     help='The number of epochs between logging to stdout.')
 parser.add_argument('--save_interval', type=int, default=1,
                     help='The number of epochs between saving checkpoints.')
-parser.add_argument('--inner_lr', type=float, default=0.1,
+parser.add_argument('--inner_lr', type=float, default=0.01,
                     help='The inner loop learning rate.')
-parser.add_argument('--outer_lr', type=float, default=0.001,
+parser.add_argument('--outer_lr', type=float, default=0.01,
                     help='The outer loop learning rate.')
 parser.add_argument('--learn_inner_lr', action='store_true',
                     help='When present, learn the inner loop learning rates.')
+parser.add_argument('--no-anil', action='store_false', dest='anil',
+                    help='When present, use MAML instead of ANIL.')
 parser.add_argument('--num_epochs', type=int, default=500,
                     help='The number of epochs to train for.')
 parser.add_argument('--num_tasks_per_epoch', type=int,
@@ -108,6 +110,7 @@ model = MAML(
     inner_lr=args.inner_lr,
     learn_inner_lr=args.learn_inner_lr,
     outer_lr=args.outer_lr,
+    anil=args.anil,
     device=DEVICE)
 logger.info('Successfully created model.')
 
@@ -121,10 +124,14 @@ def run_one_epoch(
     pre_adapt_support_losses = []
     post_adapt_support_losses = []
     post_adapt_query_losses = []
+    pre_adapt_support_maes = []
+    post_adapt_support_maes = []
+    post_adapt_query_maes = []
     for batch in dataloader:
         if train:
             optimizer.zero_grad()
-        outer_loss, support_losses = model.outer_loop(batch, train=train)
+        outer_loss, support_losses, outer_mae, support_maes = model.outer_loop(
+            batch, train=train)
         if train:
             outer_loss.backward()
             optimizer.step()
@@ -132,9 +139,17 @@ def run_one_epoch(
         pre_adapt_support_losses.append(support_losses[0].item())
         post_adapt_support_losses.append(support_losses[-1].item())
         post_adapt_query_losses.append(outer_loss.item())
+        pre_adapt_support_maes.append(support_maes[0].item())
+        post_adapt_support_maes.append(support_maes[-1].item())
+        post_adapt_query_maes.append(outer_mae.item())
 
-    return np.mean(pre_adapt_support_losses), np.mean(
-        post_adapt_support_losses), np.mean(post_adapt_query_losses)
+    return (
+        np.mean(pre_adapt_support_losses),
+        np.mean(post_adapt_support_losses),
+        np.mean(post_adapt_query_losses),
+        np.mean(pre_adapt_support_maes),
+        np.mean(post_adapt_support_maes),
+        np.mean(post_adapt_query_maes))
 
 
 optimizer = torch.optim.Adam(
@@ -142,35 +157,49 @@ optimizer = torch.optim.Adam(
     lr=args.outer_lr)
 
 for epoch in range(args.num_epochs):
-    pre_adapt_support_loss_train, post_adapt_support_loss_train, post_adapt_query_loss_train = run_one_epoch(
-        train_dataloader, optimizer, train=True)
-    writer.add_scalar('train/pre_adapt_support_MAE',
+    pre_adapt_support_loss_train, post_adapt_support_loss_train, post_adapt_query_loss_train, \
+        pre_adapt_support_mae_train, post_adapt_support_mae_train, post_adapt_query_mae_train = run_one_epoch(
+            train_dataloader, optimizer, train=True)
+    writer.add_scalar('train/loss/pre_adapt_support',
                       pre_adapt_support_loss_train, epoch)
-    writer.add_scalar('train/post_adapt_support_MAE',
+    writer.add_scalar('train/loss/post_adapt_support',
                       post_adapt_support_loss_train, epoch)
-    writer.add_scalar('train/post_adapt_query_MAE',
+    writer.add_scalar('train/loss/post_adapt_query',
                       post_adapt_query_loss_train, epoch)
+    writer.add_scalar('train/mae/pre_adapt_support',
+                      pre_adapt_support_mae_train, epoch)
+    writer.add_scalar('train/mae/post_adapt_support',
+                      post_adapt_support_mae_train, epoch)
+    writer.add_scalar('train/mae/post_adapt_query',
+                      post_adapt_query_mae_train, epoch)
 
-    pre_adapt_support_loss_val, post_adapt_support_loss_val, post_adapt_query_loss_val = run_one_epoch(
-        val_dataloader, optimizer, train=False)
-    writer.add_scalar('val/pre_adapt_support_MAE',
+    pre_adapt_support_loss_val, post_adapt_support_loss_val, post_adapt_query_loss_val, \
+        pre_adapt_support_mae_val, post_adapt_support_mae_val, post_adapt_query_mae_val = run_one_epoch(
+            val_dataloader, optimizer, train=False)
+    writer.add_scalar('val/loss/pre_adapt_support',
                       pre_adapt_support_loss_val, epoch)
-    writer.add_scalar('val/post_adapt_support_MAE',
+    writer.add_scalar('val/loss/post_adapt_support',
                       post_adapt_support_loss_val, epoch)
-    writer.add_scalar('val/post_adapt_query_MAE',
+    writer.add_scalar('val/loss/post_adapt_query',
                       post_adapt_query_loss_val, epoch)
+    writer.add_scalar('val/mae/pre_adapt_support',
+                      pre_adapt_support_mae_val, epoch)
+    writer.add_scalar('val/mae/post_adapt_support',
+                      post_adapt_support_mae_val, epoch)
+    writer.add_scalar('val/mae/post_adapt_query',
+                      post_adapt_query_mae_val, epoch)
 
     if epoch % args.log_interval == 0:
         logger.info(
             f'Epoch {epoch} TRAIN.\t'
-            f'Pre-adapt support MAE: {pre_adapt_support_loss_train}. '
-            f'Post-adapt support MAE: {post_adapt_support_loss_train}. '
-            f'Post-adapt query MAE: {post_adapt_query_loss_train}.')
+            f'Pre-adapt support MAE: {pre_adapt_support_mae_train}. '
+            f'Post-adapt support MAE: {post_adapt_support_mae_train}. '
+            f'Post-adapt query MAE: {post_adapt_query_mae_train}.')
         logger.info(
             f'Epoch {epoch} VALID.\t'
-            f'Pre-adapt support MAE: {pre_adapt_support_loss_val}. '
-            f'Post-adapt support MAE: {post_adapt_support_loss_val}. '
-            f'Post-adapt query MAE: {post_adapt_query_loss_val}.')
+            f'Pre-adapt support MAE: {pre_adapt_support_mae_val}. '
+            f'Post-adapt support MAE: {post_adapt_support_mae_val}. '
+            f'Post-adapt query MAE: {post_adapt_query_mae_val}.')
 
     if epoch % args.save_interval == 0:
         torch.save({
