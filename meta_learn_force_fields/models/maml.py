@@ -94,3 +94,13 @@ class MAML:
         outer_loss = torch.mean(torch.stack(outer_loss_batch))
         support_losses = torch.mean(torch.stack(support_losses_batch), dim=0)
         return outer_loss, support_losses
+
+    def state_dict(self):
+        return {
+            'meta_parameters': self.meta_parameters,
+            'inner_lrs': self.inner_lrs,
+        }
+
+    def load_state_dict(self, state_dict):
+        self.meta_parameters = state_dict['meta_parameters']
+        self.inner_lrs = state_dict['inner_lrs']
