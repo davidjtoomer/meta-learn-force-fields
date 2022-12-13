@@ -58,3 +58,13 @@ with h5py.File(f'data/ani{dataset}.h5') as f:
 
 ...
 ```
+
+## Training
+
+You can train the model by running the following:
+
+```
+python train.py
+```
+
+There are several adjustable parameters that you can pass into the command. To learn more about each of these, run <code>python train.py --help</code>.
